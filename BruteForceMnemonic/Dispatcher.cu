@@ -133,34 +133,15 @@ int Generate_Mnemonic(void)
 	std::cout << "\nGENERATE " << tools::formatWithCommas(Config.number_of_generated_mnemonics) << " MNEMONICS. " << tools::formatWithCommas(Config.number_of_generated_mnemonics * Data->num_all_childs) << " ADDRESSES. MNEMONICS IN ROUNDS " << tools::formatWithCommas(Data->wallets_in_round_gpu) << ". WAIT...\n\n";
 
 	tools::generateRandomUint64Buffer(Data->host.entropy, Data->size_entropy_buf / (sizeof(uint64_t)));
-	if (cudaMemcpyToSymbol(dev_num_bytes_find, &num_bytes, 4, 0, cudaMemcpyHostToDevice) != cudaSuccess)
-	{
-		std::cerr << "cudaMemcpyToSymbol to num_bytes_find failed!" << std::endl;
-		goto Error;
-	}
-	if (cudaMemcpyToSymbol(dev_generate_path, &Config.generate_path, sizeof(Config.generate_path), 0, cudaMemcpyHostToDevice) != cudaSuccess)
-	{
-		std::cerr << "cudaMemcpyToSymbol to dev_generate_path failed!" << std::endl;
-		goto Error;
-	}
-	if (cudaMemcpyToSymbol(dev_num_childs, &Config.num_child_addresses, 4, 0, cudaMemcpyHostToDevice) != cudaSuccess)
-	{
-		std::cerr << "cudaMemcpyToSymbol to dev_num_child failed!" << std::endl;
-		goto Error;
-	}
-	if (cudaMemcpyToSymbol(dev_num_paths, &Config.num_paths, 4, 0, cudaMemcpyHostToDevice) != cudaSuccess)
-	{
-		std::cerr << "cudaMemcpyToSymbol to dev_num_paths failed!" << std::endl;
-		goto Error;
-	}
-	if (cudaMemcpyToSymbol(dev_static_words_indices, &Config.words_indicies_mnemonic, 12 * 2, 0, cudaMemcpyHostToDevice) != cudaSuccess)
-	{
-		std::cerr << "cudaMemcpyToSymbol to dev_gen_words_indices failed!" << std::endl;
-		goto Error;
-	}
+	if (init_device_constants(num_bytes, Config.generate_path, Config.num_child_addresses, Config.num_paths, Config.words_indicies_mnemonic) != cudaSuccess)
+        {
+                std::cerr << "cudaMemcpyToSymbol failed!" << std::endl;
+                goto Error;
+        }
 
 	for (size_t step = 0; step < Config.number_of_generated_mnemonics / (Data->wallets_in_round_gpu); step++)
 	{
+		std::cout << "STEP " << step << " starting...\n" << std::flush;
 		tools::start_time();
 		if (Config.save_generation_result_in_file == "yes") {
 			if (Stride->start_for_save(Config.cuda_grid, Config.cuda_block) != 0) {

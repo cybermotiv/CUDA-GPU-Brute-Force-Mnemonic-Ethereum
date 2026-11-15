@@ -85,7 +85,7 @@ public:
 		cudaFreeHost(entropy);
 		cudaFreeHost(ret);
 		//for CPU
-		_aligned_free(save);
+		free(save);
 
 	}
 

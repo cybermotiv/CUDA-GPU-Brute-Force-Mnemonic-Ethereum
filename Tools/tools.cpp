@@ -8,6 +8,7 @@
   ******************************************************************************
   */
 #include "main.h"
+#include <cstring>
 #include <sstream>
 #include <iomanip>
 #include <iostream>
@@ -56,7 +57,8 @@ namespace tools {
 	int pushToMemory(uint8_t* addr_buff, std::vector<std::string>& lines, int max_len) {
 		int err = 0;
 		for (int x = 0; x < lines.size(); x++) {
-			const std::string line = lines[x];
+			std::string line = lines[x];
+				if (!line.empty() && line.back() == '\r') line.pop_back();
 			err = hexStringToBytes(line, &addr_buff[max_len * x], max_len);
 			if (err != 0) {
 				std::cerr << "\n!!!ERROR HASH160 TO BYTES: " << line << std::endl;
@@ -76,7 +78,7 @@ namespace tools {
 
 			std::string table_name = byteToHexString(x);
 
-			std::string file_path = path + "\\" + prefix + table_name + ".csv";
+			std::string file_path = path + "/" + prefix + table_name + ".csv";
 
 			std::ifstream inFile(file_path);
 			int64_t cnt_lines = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
@@ -89,7 +91,7 @@ namespace tools {
 					ret = -1;
 					break;
 				}
-				tables[x].size = (uint32_t)_msize((void*)tables[x].table);
+				tables[x].size = (uint32_t)(cnt_lines * 20);
 				memset((uint8_t*)tables[x].table, 0, cnt_lines * 20);
 				inFile.open(file_path, std::ifstream::in);
 				if (inFile.is_open())

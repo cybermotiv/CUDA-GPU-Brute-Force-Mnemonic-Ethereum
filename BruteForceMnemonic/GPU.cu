@@ -2813,6 +2813,27 @@ __constant__ uint32_t dev_num_paths[1];
 __constant__ uint32_t dev_num_childs[1];
 __constant__ int16_t dev_static_words_indices[12];
 
+extern "C" cudaError_t init_device_constants(
+    uint32_t num_bytes,
+    const uint32_t* generate_path,
+    uint32_t num_childs,
+    uint32_t num_paths,
+    const int16_t* words_indices
+)
+{
+    cudaError_t err;
+    err = cudaMemcpyToSymbol(dev_num_bytes_find, &num_bytes, sizeof(num_bytes));
+    if (err != cudaSuccess) return err;
+    err = cudaMemcpyToSymbol(dev_generate_path, generate_path, 2 * sizeof(uint32_t));
+    if (err != cudaSuccess) return err;
+    err = cudaMemcpyToSymbol(dev_num_childs, &num_childs, sizeof(num_childs));
+    if (err != cudaSuccess) return err;
+    err = cudaMemcpyToSymbol(dev_num_paths, &num_paths, sizeof(num_paths));
+    if (err != cudaSuccess) return err;
+    err = cudaMemcpyToSymbol(dev_static_words_indices, words_indices, 12 * sizeof(int16_t));
+    return err;
+}
+
 __device__
 void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase) {
 	int16_t indices[12] = { -1, -1, -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 };

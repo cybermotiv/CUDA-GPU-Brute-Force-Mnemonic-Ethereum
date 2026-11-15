@@ -29,10 +29,12 @@ __global__ void gl_bruteforce_mnemonic_for_save(
 );
 
 
-extern __constant__ uint32_t dev_num_bytes_find[];
-extern __constant__ uint32_t dev_generate_path[];
-extern __constant__ uint32_t dev_num_childs[];
-extern __constant__ uint32_t dev_num_paths[];
-extern __constant__ int16_t dev_static_words_indices[];
+extern "C" cudaError_t init_device_constants(
+    uint32_t num_bytes,
+    const uint32_t* generate_path,
+    uint32_t num_childs,
+    uint32_t num_paths,
+    const int16_t* words_indices
+);
 
 
