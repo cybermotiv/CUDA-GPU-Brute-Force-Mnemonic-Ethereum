@@ -6,9 +6,8 @@
 
 NVCC      ?= nvcc
 CXX       ?= g++
-ARCH      ?= sm_70
-COMPUTE   := compute_$(subst sm,,$(ARCH))
-CODE      := code=$(ARCH)
+ARCH      ?= 70
+GENCODE   := -gencode arch=compute_$(ARCH),code=sm_$(ARCH)
 
 STD       := -std=c++17
 OPT       := -O3
@@ -42,7 +41,7 @@ TARGET    := eth_brute
 all: $(TARGET)
 
 $(TARGET): $(CUDA_SRC) $(CPU_SRC)
-	$(NVCC) $(OPT) $(STD) -gencode arch=$(COMPUTE),$(CODE) $(INCLUDES) \
+	$(NVCC) $(OPT) $(STD) $(GENCODE) $(INCLUDES) \
 		$(CUDA_SRC) $(CPU_SRC) -o $(TARGET) $(LIBS)
 
 # CPU-only утилита Tools (не требует CUDA)
