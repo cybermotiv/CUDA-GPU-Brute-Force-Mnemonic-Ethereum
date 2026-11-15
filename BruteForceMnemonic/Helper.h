@@ -21,6 +21,7 @@
 #include <iomanip>
 #include <vector>
 #include <map>
+#include <cstdlib>
 #include <omp.h>
 
 #include "cuda_runtime.h"
@@ -46,8 +47,8 @@ public:
 	}
 
 	int alignedMalloc(void** point, uint64_t size, uint64_t* all_ram_memory_size, std::string buff_name) {
-		*point = _aligned_malloc(size, 4096);
-		if (NULL == *point) { fprintf(stderr, "_aligned_malloc (%s) failed! Size: %s", buff_name.c_str(), tools::formatWithCommas(size).data()); return 1; }
+		if (posix_memalign(point, 4096, size) != 0) *point = NULL;
+		if (NULL == *point) { fprintf(stderr, "posix_memalign (%s) failed! Size: %s", buff_name.c_str(), tools::formatWithCommas(size).data()); return 1; }
 		*all_ram_memory_size += size;
 		//std::cout << "MALLOC RAM MEMORY SIZE (" << buff_name << "): " << std::to_string((float)size / (1024.0f * 1024.0f)) << " MB\n";
 		return 0;
@@ -85,7 +86,7 @@ public:
 		cudaFreeHost(entropy);
 		cudaFreeHost(ret);
 		//for CPU
-		_aligned_free(save);
+		free(save);
 
 	}
 

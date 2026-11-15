@@ -8,11 +8,13 @@
   ******************************************************************************
   */
 #include "main.h"
+#include <cstring>
 #include <sstream>
 #include <iomanip>
 #include <iostream>
 #include <omp.h>
 #include <set>
+#include <atomic>
 #include <random>
 #include <fstream>
 #include <filesystem>
@@ -55,13 +57,17 @@ namespace tools {
 
 	int pushToMemory(uint8_t* addr_buff, std::vector<std::string>& lines, int max_len) {
 		int err = 0;
-		for (int x = 0; x < lines.size(); x++) {
-			const std::string line = lines[x];
-			err = hexStringToBytes(line, &addr_buff[max_len * x], max_len);
+		size_t y = 0;
+		for (size_t x = 0; x < lines.size(); x++) {
+			std::string line = lines[x];
+			if (!line.empty() && line.back() == '\r') line.pop_back();
+			if (line.empty()) continue; // пропускаем пустые строки (например, завершающий перевод строки)
+			err = hexStringToBytes(line, &addr_buff[max_len * y], max_len);
 			if (err != 0) {
 				std::cerr << "\n!!!ERROR HASH160 TO BYTES: " << line << std::endl;
 				return err;
 			}
+			y++;
 		}
 		return err;
 	}
@@ -71,12 +77,14 @@ namespace tools {
 		int ret = 0;
 		std::string num_tables;
 		size_t all_lines = 0;
+		std::atomic<int> stop_flag{ 0 };
 #pragma omp parallel for 
 		for (int x = 0; x < 256; x++) {
+			if (stop_flag.load()) continue;
 
 			std::string table_name = byteToHexString(x);
 
-			std::string file_path = path + "\\" + prefix + table_name + ".csv";
+			std::string file_path = path + "/" + prefix + table_name + ".csv";
 
 			std::ifstream inFile(file_path);
 			int64_t cnt_lines = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
@@ -87,9 +95,10 @@ namespace tools {
 					printf("Error: malloc failed to allocate buffers.Size %llu. From file %s\n", (unsigned long long int)(cnt_lines * 20), file_path.c_str());
 					inFile.close();
 					ret = -1;
-					break;
+					stop_flag = 1;
+					continue;
 				}
-				tables[x].size = (uint32_t)_msize((void*)tables[x].table);
+				tables[x].size = (uint32_t)(cnt_lines * 20);
 				memset((uint8_t*)tables[x].table, 0, cnt_lines * 20);
 				inFile.open(file_path, std::ifstream::in);
 				if (inFile.is_open())
@@ -104,8 +113,9 @@ namespace tools {
 					if (ret != 0) {
 						std::cerr << "\n!!!ERROR push_to_memory, file: " << file_path << std::endl;
 						ret = -1;
+						stop_flag = 1;
 						inFile.close();
-						break;
+						continue;
 					}
 
 					if (cnt_lines != lines.size()) {
@@ -117,7 +127,8 @@ namespace tools {
 				{
 					std::cerr << "\n!!!ERROR open file: " << file_path << std::endl;
 					ret = -1;
-					break;
+					stop_flag = 1;
+					continue;
 				}
 #pragma omp critical 
 				{

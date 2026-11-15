@@ -9,7 +9,7 @@
   */
 #include "../BruteForceMnemonic/stdafx.h"
 #include <stdio.h>
-#include <windows.h>
+#include <ctime>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
@@ -22,22 +22,20 @@
 #include "segwit_addr.h"
 
 namespace tools {
-	static LARGE_INTEGER performanceCountStart;
-	static LARGE_INTEGER performanceCountStop;
+	static struct timespec performanceCountStart;
+	static struct timespec performanceCountStop;
 
 	void start_time(void) {
-		QueryPerformanceCounter(&performanceCountStart);
+		clock_gettime(CLOCK_MONOTONIC, &performanceCountStart);
 	}
 
 	void stop_time(void) {
-		QueryPerformanceCounter(&performanceCountStop);
+		clock_gettime(CLOCK_MONOTONIC, &performanceCountStop);
 	}
 
 	void stop_time_and_calc_sec(float* delay) {
 		stop_time();
-		LARGE_INTEGER perfFrequency;
-		QueryPerformanceFrequency(&perfFrequency);
-		*delay = (double)(performanceCountStop.QuadPart - performanceCountStart.QuadPart) / (double)perfFrequency.QuadPart;
+				*delay = (double)(performanceCountStop.tv_sec - performanceCountStart.tv_sec) + (double)(performanceCountStop.tv_nsec - performanceCountStart.tv_nsec) / 1e9;
 	}
 
 
@@ -45,7 +43,7 @@ namespace tools {
 	{
 		uint64_t value = (uint64_t)val;
 		std::stringstream ss;
-		ss.imbue(std::locale("en_US.UTF-8"));
+		ss.imbue(std::locale::classic());
 		ss << std::fixed << value;
 		return ss.str();
 	}
@@ -53,7 +51,7 @@ namespace tools {
 	std::string formatWithCommas(uint64_t value)
 	{
 		std::stringstream ss;
-		ss.imbue(std::locale("en_US.UTF-8"));
+		ss.imbue(std::locale::classic());
 		ss << std::fixed << value;
 		return ss.str();
 	}
@@ -72,7 +70,7 @@ namespace tools {
 		}
 
 		std::stringstream ss;
-		ss.imbue(std::locale("en_US.UTF-8"));
+		ss.imbue(std::locale::classic());
 		ss << std::fixed << val << " " << prefix;
 		return ss.str();
 	}

@@ -48,7 +48,7 @@ int check_config(ConfigClass& config)
 		std::cerr << "Error num_child. Please enter a number less than 65,535" << std::endl;
 		throw std::logic_error("error parse config.cfg file");
 	}
-	if (config.number_of_generated_mnemonics > 18000000000000000000)
+	if (config.number_of_generated_mnemonics > 18000000000000000000ULL)
 	{
 		std::cerr << "Error number_of_generated_mnemonics. Please enter a number less than 18,000,000,000,000,000,000" << std::endl;
 		throw std::logic_error("error parse config.cfg file");

@@ -83,7 +83,8 @@ ETH/
 ```bash
 # Строка 49: _aligned_malloc(size, 4096) → posix_memalign(point, 4096, size)
 # Строка 88: _aligned_free(save) → free(save)
-# (Уже сделано пользователем до начала работы)
+# (ВНИМАНИЕ: в снапшоте репозитория правка ПОТЕРЯЛАСЬ — восстановлена заново 2026-11-16,
+#  плюс добавлен #include <cstdlib> в Helper.h)
 ```
 
 ### 3.3. Tools/tools.cpp — отсутствует <cstring> и _msize
@@ -214,6 +215,19 @@ if (init_device_constants(num_bytes, Config.generate_path, Config.num_child_addr
 
 ---
 
+### 3.11. Tools/tools.cpp — `break` внутри `#pragma omp parallel for` (ОБНАРУЖЕНО И ИСПРАВЛЕНО 2026-11-16)
+**Проблема:** GCC: `error: break statement used with OpenMP for loop` (3 места в readAllTables). Из-за этого CPU-код не компилировался вообще.
+**Решение:** Заменены `break` на флаг `std::atomic<int> stop_flag` + `continue`; в начале тела цикла проверка `if (stop_flag.load()) continue;`. Добавлен `#include <atomic>`.
+
+### 3.12. Tools/tools.cpp — пустая строка в конце CSV ломала базу (ИСПРАВЛЕНО 2026-11-16)
+**Проблема:** `pushToMemory` писал по индексу строки файла; пустая завершающая строка (`...\n`) давала мусорную запись и сдвиг таблицы.
+**Решение:** Пустые строки пропускаются, запись идёт по отдельному счётчику `y`.
+
+### 3.13. Makefile (СОЗДАН 2026-11-16)
+Файл `Makefile` в корне: `make` (eth_brute, ARCH=sm_61 по умолчанию), `make ARCH=sm_70` (V100), `make tools` (CPU-утилита без CUDA, проверено — собирается).
+
+---
+
 ## 4. ИТОГОВАЯ КОМАНДА КОМПИЛЯЦИИ
 
 ```bash
@@ -315,7 +329,9 @@ abandon ability ... about,address path m/44'/60'/0'/0/0:,0x1234...,Mon Jul 13 02
 - [x] Проблема 8: CRLF в CSV — ИСПРАВЛЕНО
 - [x] Проблема 9: cudaMemcpyToSymbol между .cu файлами — ИСПРАВЛЕНО (init_device_constants)
 - [x] Проблема 10: Отсутствие вывода прогресса — ИСПРАВЛЕНО
-- [x] Компиляция успешна — бинарник `eth_brute` создан (~7MB)
+- [x] Компиляция успешна — бинарник `eth_brute` создан (~7MB) (на сервере max; в этом workspace нет nvcc/GPU)
+- [x] Helper.h posix_memalign — ВОССТАНОВЛЕНО (пропало в снапшоте)
+- [x] tools.cpp omp break / пустые строки — ИСПРАВЛЕНО, CPU-код компилируется (`make tools`)
 - [x] Запуск успешен — программа работает на GTX 1050
 - [ ] Перенос на V100 — НЕТ
 - [ ] Конвертация SQLite → hash160 (198M адресов) — НЕТ
