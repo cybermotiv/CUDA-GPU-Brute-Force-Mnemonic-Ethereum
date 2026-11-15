@@ -1,12 +1,12 @@
 # Makefile для Linux-порта BruteForceMnemonic (CUDA)
 # Использование:
-#   make            — сборка бинарника eth_brute (по умолчанию sm_61 / GTX 10xx)
-#   make ARCH=sm_70 — сборка под V100
+#   make            — сборка eth_brute (по умолчанию sm_70 / V100)
+#   make ARCH=sm_86 — другая архитектура GPU (RTX 30xx и т.п.)
 #   make tools      — сборка CPU-утилиты Tools (без CUDA)
 
 NVCC      ?= nvcc
 CXX       ?= g++
-ARCH      ?= sm_61
+ARCH      ?= sm_70
 COMPUTE   := compute_$(subst sm,,$(ARCH))
 CODE      := code=$(ARCH)
 
@@ -33,7 +33,7 @@ CPU_SRC   := \
 	bitcoin/crypto/sha512.cpp \
 	bitcoin/crypto/hmac_sha512.cpp
 
-LIBS      := -lcurand -lcudart -lssl -lcrypto -lpthread
+LIBS      := -lcudart -lssl -lcrypto -lpthread
 
 TARGET    := eth_brute
 
